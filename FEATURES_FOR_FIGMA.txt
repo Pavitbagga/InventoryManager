@@ -1,0 +1,748 @@
+================================================================================
+  INVENTORY MANAGER POS — FEATURES & FUNCTIONALITIES FOR FIGMA DIAGRAMS
+================================================================================
+App: Point-of-Sale (POS) System for attar/fragrance retail shop
+Stack: Next.js 14, TypeScript, Tailwind CSS, Prisma, SQLite, jsPDF
+================================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1 — PAGES / SCREENS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SCREEN 1: POS Screen (Main Interface) — Route: /
+─────────────────────────────────────────────────
+Purpose: Primary shopkeeper interface for conducting sales transactions.
+
+Layout zones:
+  • Header Bar (top, full width)
+  • Left Panel (320px wide):
+      - Bill Panel (cart + totals)
+      - Numpad (digit keys + action buttons)
+  • Right Panel (remaining width):
+      - Product Grid (category tabs + product buttons)
+      - Action Bar (checkout buttons)
+
+Header Bar elements:
+  • Clerk name (clickable → opens Clerk Switch Modal)
+  • "Sign Out" button
+  • "Admin" link (→ /admin or /admin/login)
+  • "Bills" link (→ /bills)
+  • Status message display (flash messages: success/error)
+  • Zoom Control widget
+  • Help button (?) → toggles Keyboard Shortcuts Overlay
+  • Live clock (HH:MM, updates every 1 second)
+
+─────────────────────────────────────────────────
+SCREEN 2: Admin Login — Route: /admin/login
+─────────────────────────────────────────────────
+Purpose: Authenticate the admin before accessing the admin portal.
+
+UI elements:
+  • Centered login card (dark theme)
+  • Username input field
+  • Password input field
+  • "Sign In" button
+  • Error message area
+  • Default credentials hint: "admin / admin123"
+
+─────────────────────────────────────────────────
+SCREEN 3: Admin Portal — Route: /admin
+─────────────────────────────────────────────────
+Purpose: Management dashboard for products, categories, clerks, bill setup, and settings.
+
+Layout:
+  • Tab navigation bar: Products | Categories | Clerks | Bill Config | Settings
+  • Content area (changes per tab)
+  • Status message bar (green/red feedback)
+
+Tab 1 — Products:
+  • Search input (filter by name)
+  • Category filter dropdown
+  • Sort buttons: Name | Price | Stock | Category (toggle asc/desc)
+  • Products table: Name, Price, Stock, Category, Edit, Delete buttons
+  • Add / Edit Product form:
+      - Name (text input)
+      - Price (number input)
+      - Color (color picker)
+      - PLU Code (optional text)
+      - Stock (number)
+      - Category (dropdown)
+  • Pending Deletions Review Modal
+
+Tab 2 — Categories:
+  • Category list with Edit / Delete per row
+  • Add / Edit Category form:
+      - Name (text input)
+      - Color (color picker)
+      - Position (number, controls display order)
+  • Delete guard: prevents deletion if products exist in category
+
+Tab 3 — Clerks:
+  • Clerk list: Name, Role, Status (Active/Inactive), Email, Phone, Edit / Reset PIN / Delete buttons
+  • Add / Edit Clerk form:
+      - Name, Email (optional), Phone (optional)
+      - Role (dropdown: clerk / admin)
+      - Active toggle (checkbox)
+  • PIN Change Modal:
+      - New PIN input (4+ digits required)
+      - Confirm PIN
+
+Tab 4 — Bill Config:
+  • Text inputs: Shop Name, Shop Address, Shop Phone, Shop GST, Footer Message
+  • Toggle checkboxes:
+      - Show Logo
+      - Show GST
+      - Show Address
+      - Show Phone
+      - Show Clerk Name on receipt
+      - Show Table Number on receipt
+      - Show Item Rate column
+      - Show Discount line
+  • Paper width selector (default 80mm thermal)
+  • Currency symbol input (default: Rs.)
+  • Save button
+
+Tab 5 — Settings:
+  • Change Admin Password form:
+      - Current Password input
+      - New Password input
+      - Confirm New Password input
+      - Save button
+
+─────────────────────────────────────────────────
+SCREEN 4: Bill History — Route: /bills
+─────────────────────────────────────────────────
+Purpose: View historical bills and reprint receipts.
+
+UI elements:
+  • Header: Bill count stat, Total Revenue stat
+  • Search input (filter by bill number or clerk name)
+  • Clerk info display + Sign Out
+  • Zoom Control
+  • Bills table:
+      - Bill No, Date & Time, Clerk, Item Count, Subtotal, Discount, Total, Payment Mode
+      - Print (Reprint) button per row
+  • Back to POS link
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2 — COMPONENTS (Reusable UI Blocks)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMPONENT: Bill Panel
+──────────────────────
+Location: Left panel of POS screen (top portion)
+Purpose: Displays current cart items and transaction totals.
+
+Sub-elements:
+  • Header row: Clerk ID (yellow label) | Bill Number (monospace, dark box)
+  • Column headers: ITEM | QTY | RATE | AMT
+  • Scrollable cart item list:
+      - Each row: Product name | Quantity | Unit price | Line total
+      - Selected row: blue highlight
+      - Hover effect on rows
+  • Totals footer:
+      - SUBTOTAL (gray)
+      - DISCOUNT (red, visible only if discount > 0)
+      - TOTAL (large, green, bold)
+
+─────────────────────────────────────────────────
+COMPONENT: Product Grid
+──────────────────────
+Location: Right panel of POS screen (main body)
+Purpose: Browse products by category and add them to cart.
+
+Sub-elements:
+  • Category tab bar (horizontally scrollable):
+      - One tab per category, active tab = white background
+  • Product grid (5 columns):
+      - Each product button: custom background color, product name (small), price below name
+      - Hover: brightness increase
+      - Click animation: scale-down press effect
+
+─────────────────────────────────────────────────
+COMPONENT: Numpad
+──────────────────────
+Location: Left panel of POS screen (below Bill Panel)
+Purpose: Enter quantities, discounts, and trigger actions.
+
+Sub-elements:
+  • Input display (top):
+      - Label: "QTY:" (qty mode) or "INPUT:" (normal mode)
+      - Value display: current numpad input (right-aligned, monospace)
+  • Left action button column:
+      - CORRECT (red) — delete last digit
+      - VOID (red) — remove selected item
+      - REFUND (red) — placeholder
+      - TRANSACT VOID (dark red) — clear entire cart
+      - EXIT (darkest red) — placeholder
+  • Center digit keypad (3 columns × 4 rows):
+      - 7, 8, 9
+      - 4, 5, 6
+      - 1, 2, 3
+      - 0, 00, . (decimal)
+  • Right action button grid:
+      - CLEAR, QTY, CLERK, UP (▲), DOWN (▼), BILL (orange), TABLE, STORE
+
+─────────────────────────────────────────────────
+COMPONENT: Action Bar
+──────────────────────
+Location: Bottom of right panel on POS screen
+Purpose: Final sale actions and checkout.
+
+Sub-elements:
+  • Left buttons (muted): PLU NUMBER | PRICE SHIFT | BUFFER PRINT | REOPEN BILL
+  • SUBTOTAL button (purple) — shows live subtotal amount
+  • DISCOUNT button (pink) — apply discount
+  • CASH button (green, large, right-aligned) — complete transaction; disabled when cart is empty
+
+─────────────────────────────────────────────────
+COMPONENT: Clerk Login Modal
+──────────────────────
+Location: Overlay on POS screen
+Purpose: Clerk authentication via name selection + PIN entry.
+
+Step 1 — Clerk selection:
+  • Scrollable list of active clerks
+  • Each clerk: name button (click to select)
+
+Step 2 — PIN entry:
+  • Back button (return to list)
+  • Clerk name display
+  • PIN input display (masked dots, max 10 chars)
+  • PIN numpad (1-9, 0 centered, Backspace)
+  • Sign In button
+
+─────────────────────────────────────────────────
+COMPONENT: Keyboard Shortcuts Overlay
+──────────────────────
+Location: Modal overlay (any screen)
+Purpose: Show all keyboard shortcuts for the current mode.
+
+Sub-elements:
+  • Close button (X)
+  • Backdrop with blur
+  • Grouped shortcut cards:
+      - POS mode groups: Numpad, Cart, Modes, Zoom
+      - Admin mode groups: Navigation, Forms, Zoom
+  • Each shortcut: styled key badge(s) + description
+
+─────────────────────────────────────────────────
+COMPONENT: Zoom Control
+──────────────────────
+Location: Header bar (POS and Bills screens)
+Purpose: Adjust UI text scale.
+
+Sub-elements:
+  • Minus (−) button (disabled at minimum zoom 70%)
+  • Percentage display (click to reset to 100%)
+  • Plus (+) button (disabled at maximum zoom 150%)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3 — FEATURES & FUNCTIONALITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FEATURE 1: Clerk Authentication
+────────────────────────────────
+What: PIN-based login for shop clerks (not admin).
+Use cases:
+  • Clerk starts a shift → selects name from list → enters 4+ digit PIN → gains access to POS.
+  • Multiple clerks share one device; each transaction is tagged to a clerk.
+  • Clerk can switch mid-session (clerk switch modal) without a full page reload.
+  • Session persists in localStorage so refresh doesn't log clerk out.
+  • Sign Out clears clerk session.
+
+─────────────────────────────────────────────────
+FEATURE 2: Admin Authentication
+────────────────────────────────
+What: Username + password login for admin access.
+Use cases:
+  • Owner/manager logs in to access admin portal.
+  • Default credentials: admin / admin123 (created automatically on first access).
+  • Sessions use an 8-hour expiry httpOnly cookie.
+  • All /admin/* routes (except /admin/login) are middleware-protected; unauthenticated users are redirected.
+  • Admin can change password via Settings tab.
+
+─────────────────────────────────────────────────
+FEATURE 3: Product Management (Admin)
+────────────────────────────────────────
+What: Full CRUD for products.
+Use cases:
+  • Admin adds a new product with name, price, category, color, PLU code, and stock.
+  • Admin edits an existing product (e.g., price change, restock).
+  • Admin deletes a product (queued in review modal before final deletion).
+  • Admin filters products by category or searches by name.
+  • Admin sorts the product list by name, price, stock, or category.
+  • Each product has a color that appears on its POS button.
+  • PLU code allows quick lookup by code instead of name.
+
+─────────────────────────────────────────────────
+FEATURE 4: Category Management (Admin)
+────────────────────────────────────────
+What: Full CRUD for product categories.
+Use cases:
+  • Admin creates a new category (e.g., "Ruh Oils") with a display color and order position.
+  • Admin edits category name, color, or position (display order in POS tabs).
+  • Admin deletes a category only if it has no products (guard prevents orphaned products).
+  • Categories appear as tabs in the POS product grid, sorted by position.
+
+─────────────────────────────────────────────────
+FEATURE 5: Clerk Management (Admin)
+────────────────────────────────────────
+What: CRUD for clerk accounts.
+Use cases:
+  • Admin adds a new clerk with name, PIN, email, phone, and role.
+  • Admin deactivates a clerk (they won't appear in the POS clerk list).
+  • Admin resets a clerk's PIN via PIN Change Modal.
+  • Admin deletes a clerk (queued in review modal).
+  • Clerk PINs are never exposed via GET API (security by omission).
+
+─────────────────────────────────────────────────
+FEATURE 6: Bill Configuration (Admin)
+────────────────────────────────────────
+What: Customize what appears on printed thermal receipts.
+Use cases:
+  • Admin sets shop name, address, phone, GST number, and footer message.
+  • Admin toggles sections: logo, GST line, address, phone, clerk name, table number, item rate column, discount line.
+  • Admin sets the currency symbol (default: Rs.).
+  • Admin sets paper width (default: 80mm for thermal printer).
+  • All PDF receipts generated from this config at print time.
+
+─────────────────────────────────────────────────
+FEATURE 7: Cart Management (POS)
+────────────────────────────────────────
+What: Build a transaction by adding, adjusting, and removing items.
+Use cases:
+  • Clerk clicks a product button → product added to cart with qty 1.
+  • Clerk pre-types a number on numpad before clicking product → product added with that qty.
+  • If the same product is clicked again, its qty increments instead of adding a duplicate row.
+  • Clerk clicks a cart row to highlight/select it.
+  • Clerk clicks a selected row again to deselect.
+  • Navigate cart selection with Up/Down keyboard arrows.
+  • VOID (or Delete key) removes the selected item, or the last item if none selected.
+  • TRANSACT VOID (or Ctrl+Z) clears the entire cart and resets discount.
+
+─────────────────────────────────────────────────
+FEATURE 8: Quantity Mode (POS)
+────────────────────────────────────────
+What: Enter a specific quantity before adding a product.
+Use cases:
+  • Clerk presses QTY button (or Q key) → numpad switches to "QTY:" mode.
+  • Clerk types desired quantity on numpad.
+  • Clerk clicks product → product is added with the typed quantity.
+  • Esc key exits qty mode and clears input.
+
+─────────────────────────────────────────────────
+FEATURE 9: Discount Application (POS)
+────────────────────────────────────────
+What: Apply a flat rupee discount to the current transaction.
+Use cases:
+  • Clerk types a discount amount on numpad.
+  • Clerk presses D key or DISCOUNT button → discount is applied.
+  • Discount is validated: must be ≥ 0 and ≤ subtotal.
+  • Discount amount shown in red in the Bill Panel totals.
+  • Discount is also saved to the Bill record and printed on the receipt.
+
+─────────────────────────────────────────────────
+FEATURE 10: Checkout & Bill Generation (POS)
+────────────────────────────────────────────────
+What: Finalize a sale, save the bill, and print a receipt.
+Use cases:
+  • Clerk clicks CASH button or presses Enter → checkout begins.
+  • System POSTs cart data, discount, clerk ID, and payment mode to /api/bills.
+  • Server creates a Bill record with a unique bill number (BILL-YYYYMMDD-XXXXXX).
+  • Server creates BillItem records (snapshots of product name and price at time of sale).
+  • On success: PDF receipt is generated and opened in a new tab (auto-print dialog triggered).
+  • Cart is cleared, bill counter increments.
+  • On failure: error flash message shown to clerk.
+
+─────────────────────────────────────────────────
+FEATURE 11: PDF Receipt Printing
+────────────────────────────────────────
+What: Generate a 80mm thermal receipt as a PDF.
+Use cases:
+  • Triggered automatically after successful checkout.
+  • Can also be triggered from the Bills History page (reprint).
+  • PDF includes (based on config toggles):
+      - Shop name, address, phone, GST
+      - Bill number, date/time, clerk name, table number
+      - Item table: product name, qty, rate (if enabled), amount
+      - Subtotal, discount, total
+      - Payment mode
+      - Footer message
+  • PDF opens in new browser tab and triggers print dialog.
+
+─────────────────────────────────────────────────
+FEATURE 12: Bill History & Reprint (Bills Page)
+────────────────────────────────────────────────
+What: View past bills and regenerate receipts.
+Use cases:
+  • Clerk or admin navigates to /bills to see the last 100 transactions.
+  • Search bills by bill number or clerk name.
+  • View stats: total bills shown, total revenue.
+  • Click Print on any row to regenerate the PDF receipt on-the-fly.
+
+─────────────────────────────────────────────────
+FEATURE 13: Numpad Input
+────────────────────────────────────────
+What: Physical-style numpad for digit entry in POS.
+Use cases:
+  • Enter quantities: type qty before clicking a product.
+  • Enter discount amounts: type amount then press D.
+  • Enter PLU codes (future): type code for product lookup.
+  • CORRECT button (or Backspace key) deletes the last digit.
+  • Input limited to 8 digits max; decimal point supported.
+
+─────────────────────────────────────────────────
+FEATURE 14: Keyboard Shortcuts System
+────────────────────────────────────────
+What: Full keyboard-driven workflow for POS and admin portal.
+Use cases:
+  POS:
+    • 0-9: numpad digit entry
+    • Enter: complete sale (CASH)
+    • Delete: void selected/last item
+    • Ctrl+Z: transact void (clear cart)
+    • ↑ / ↓: navigate cart selection
+    • Q: enter QTY mode
+    • D: apply discount
+    • C: open clerk switch modal
+    • ?: toggle keyboard help overlay
+    • Ctrl++ / Ctrl+- / Ctrl+0: zoom in / zoom out / reset
+  Admin:
+    • 1-5: switch between tabs
+    • Ctrl+S: save current form
+    • Esc: cancel editing
+    • ?: toggle keyboard help overlay
+    • Ctrl++ / Ctrl+- / Ctrl+0: zoom
+
+─────────────────────────────────────────────────
+FEATURE 15: UI Zoom / Accessibility Scaling
+────────────────────────────────────────────────
+What: Scale the entire UI text for readability on different screens.
+Use cases:
+  • Clerk adjusts zoom via the zoom control widget (+/- buttons) or Ctrl+Plus/Minus.
+  • Zoom range: 70% to 150% (increment: 10%).
+  • Click percentage label to reset to 100%.
+  • Zoom persists across page refreshes (stored in localStorage).
+  • Buttons disabled at min/max limits.
+
+─────────────────────────────────────────────────
+FEATURE 16: Live Clock
+────────────────────────────────────────
+What: Real-time clock displayed in the POS header.
+Use cases:
+  • Helps clerk track time during shifts.
+  • Updates every second (HH:MM format).
+
+─────────────────────────────────────────────────
+FEATURE 17: Status Messages (Flash Feedback)
+────────────────────────────────────────────────
+What: Transient success and error messages shown in the header.
+Use cases:
+  • "Bill saved successfully" after checkout.
+  • "Error: could not save bill" on failure.
+  • "Discount applied" when discount is set.
+  • Messages auto-dismiss after a short duration.
+
+─────────────────────────────────────────────────
+FEATURE 18: Pending Deletions Review (Admin)
+────────────────────────────────────────────────
+What: Safety confirmation step before deleting products or clerks.
+Use cases:
+  • Admin clicks Delete on a product or clerk → action queued, not executed immediately.
+  • Review Modal shows all pending deletions.
+  • Admin confirms → deletions execute.
+  • Admin cancels → queue cleared, nothing deleted.
+
+─────────────────────────────────────────────────
+FEATURE 19: Product Color Coding
+────────────────────────────────────────
+What: Each product has a custom display color.
+Use cases:
+  • Admin assigns a color to each product (and each category).
+  • Product buttons in the POS grid use this color as background.
+  • Helps clerks visually identify products by color-category grouping.
+  • Category tabs also use the category color for quick identification.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4 — DATA MODELS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Category
+  id          — unique identifier
+  name        — category label (e.g., "MENU 1")
+  color       — hex color for tab/button display
+  position    — integer for sort order
+  [products]  — list of products in this category
+
+Product
+  id          — unique identifier
+  name        — product label (e.g., "Sandalwood 5ml")
+  price       — selling price in rupees
+  color       — hex color for POS button background
+  pluCode     — optional shortcode for quick lookup
+  stock       — current stock quantity
+  categoryId  — link to parent category
+  [billItems] — historical sale records
+
+Bill
+  id            — unique identifier
+  billNumber    — formatted "BILL-YYYYMMDD-XXXXXX"
+  clerkId       — which clerk processed the sale
+  tableNumber   — optional (for restaurant/table mode)
+  subtotal      — sum of all item totals
+  discount      — flat discount amount applied
+  total         — subtotal minus discount
+  paymentMode   — e.g., "CASH"
+  status        — e.g., "PAID"
+  [items]       — list of BillItem records
+  createdAt     — timestamp
+
+BillItem
+  id        — unique identifier
+  billId    — parent bill
+  productId — reference to product
+  name      — snapshot of product name at time of sale
+  price     — snapshot of product price at time of sale
+  quantity  — quantity sold
+  total     — price × quantity
+
+Clerk
+  id        — unique identifier
+  name      — clerk name (unique)
+  pin       — 4+ digit PIN (stored in DB)
+  email     — optional
+  phone     — optional
+  role      — "clerk" or "admin"
+  active    — boolean (inactive = hidden from POS login list)
+
+BillConfig
+  shopName        — displayed at top of receipt
+  shopAddress     — address line
+  shopPhone       — phone number
+  shopGST         — GST registration number
+  footerMessage   — bottom of receipt (e.g., "Thank you!")
+  showLogo        — boolean
+  showGST         — boolean
+  showAddress     — boolean
+  showPhone       — boolean
+  showClerk       — boolean (show clerk name on receipt)
+  showTable       — boolean (show table number on receipt)
+  showItemRate    — boolean (show unit rate column)
+  showDiscount    — boolean (show discount line)
+  paperWidth      — mm (default 80)
+  currency        — symbol (default "Rs.")
+
+AdminUser
+  id            — unique identifier
+  username      — admin login name
+  passwordHash  — SHA-256 hashed password
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5 — USER FLOWS (for Flow Diagrams)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FLOW A: Clerk Sale Transaction
+──────────────────────────────
+1. Clerk opens POS (/)
+2. Clerk Login Modal appears (no clerk in session)
+3. Clerk selects name from list
+4. Clerk enters PIN → authenticated → modal closes
+5. Clerk selects a category tab in Product Grid
+6. Optionally: types quantity on numpad
+7. Clicks product button → item added to cart
+8. Repeats steps 5-7 for more items
+9. Optionally: types discount amount → presses DISCOUNT
+10. Presses CASH button (or Enter key)
+11. System saves bill to database
+12. PDF receipt opens in new tab → print dialog
+13. Cart cleared → ready for next sale
+
+FLOW B: Void / Remove Item
+───────────────────────────
+1. Clerk is on POS screen with items in cart
+2. Clicks a cart row → row highlighted blue
+3. Presses VOID button (or Delete key) → item removed
+OR:
+3b. Presses TRANSACT VOID (or Ctrl+Z) → entire cart cleared
+
+FLOW C: Clerk Switch
+──────────────────────
+1. Current clerk clicks their name in header
+2. Clerk Switch Modal opens (shows all active clerks)
+3. New clerk selects their name
+4. New clerk enters PIN → authenticated
+5. POS now tagged to new clerk for next transaction
+
+FLOW D: Admin Login & Product Edit
+────────────────────────────────────
+1. User navigates to /admin
+2. Middleware detects no session → redirects to /admin/login
+3. Admin enters username + password → POST /api/auth/login
+4. On success: redirected to /admin dashboard
+5. Admin clicks "Products" tab
+6. Admin searches for a product
+7. Admin clicks "Edit" on a product row
+8. Edit form opens pre-filled
+9. Admin updates price → clicks Save
+10. System PUTs /api/products/[id] → product updated
+11. Success message shown
+
+FLOW E: Add New Clerk
+──────────────────────
+1. Admin on /admin → Clerks tab
+2. Admin fills: Name, PIN, Email, Phone, Role
+3. Admin clicks Add Clerk
+4. System POSTs /api/clerks
+5. New clerk appears in list
+6. Clerk can now log into POS
+
+FLOW F: Reprint a Bill
+───────────────────────
+1. Clerk navigates to /bills
+2. Searches by bill number or clerk name
+3. Finds the desired bill row
+4. Clicks "Print" button
+5. PDF receipt regenerated from saved data
+6. PDF opens in new tab → print dialog
+
+FLOW G: Configure Receipt
+──────────────────────────
+1. Admin on /admin → Bill Config tab
+2. Edits shop name, address, GST, footer
+3. Toggles optional sections (e.g., hide table number, show item rate)
+4. Clicks Save → PUT /api/bill-config
+5. All future (and reprinted) receipts use new config
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6 — API ENDPOINTS (for API / Architecture Diagrams)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Auth:
+  POST   /api/auth/login            — Admin login (returns session cookie)
+  POST   /api/auth/logout           — Admin logout (destroys session)
+  POST   /api/auth/change-password  — Change admin password (requires session)
+
+Categories:
+  GET    /api/categories            — List all categories (with nested products)
+  POST   /api/categories            — Create category
+  PUT    /api/categories/[id]       — Update category
+  DELETE /api/categories/[id]       — Delete category (guard: no products)
+
+Products:
+  GET    /api/products              — List all products (with category)
+  POST   /api/products              — Create product
+  PUT    /api/products/[id]         — Update product
+  DELETE /api/products/[id]         — Delete product
+
+Bills:
+  GET    /api/bills                 — Last 100 bills (with items)
+  POST   /api/bills                 — Create bill (checkout)
+  GET    /api/bills/[id]            — Single bill detail
+
+Bill Config:
+  GET    /api/bill-config           — Get config (creates default if none)
+  PUT    /api/bill-config           — Update config
+
+Clerks:
+  GET    /api/clerks                — List all clerks (PIN excluded)
+  POST   /api/clerks                — Create clerk
+  GET    /api/clerks/[id]           — Single clerk
+  PUT    /api/clerks/[id]           — Update clerk (PIN only updated if provided)
+  DELETE /api/clerks/[id]           — Delete clerk
+  POST   /api/clerks/auth           — Authenticate clerk by PIN
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 7 — ROLES & PERMISSIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Role: Admin (AdminUser)
+  • Access: /admin portal (all 5 tabs)
+  • Can: manage products, categories, clerks, bill config, change own password
+  • Auth: username + password → httpOnly session cookie (8-hour expiry)
+  • Default: admin / admin123 (auto-created on first access)
+
+Role: Clerk (Clerk model)
+  • Access: POS screen (/), Bills page (/bills)
+  • Can: process sales, apply discounts, void items, reprint bills
+  • Auth: select name from list → enter PIN (4+ digits)
+  • Session: stored in browser localStorage (persists across refresh)
+  • Cannot: access /admin routes
+
+Unauthenticated (no clerk session):
+  • POS screen shows Clerk Login Modal (blocking)
+  • /admin/* routes redirect to /admin/login
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 8 — SYSTEM ARCHITECTURE (for Architecture Diagrams)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Client (Browser):
+  • Next.js React pages (POS, Admin, Bills)
+  • Tailwind CSS styling
+  • jsPDF: PDF generation in browser
+  • localStorage: clerk session, zoom level
+
+Server (Next.js App Router):
+  • API routes (REST): auth, categories, products, bills, bill-config, clerks
+  • Middleware: protects /admin/* routes (cookie check → redirect)
+  • In-memory session store (Map): token → { username, expires }
+  • SHA-256 password hashing with SESSION_SECRET
+
+Database (SQLite via Prisma ORM):
+  • Models: Category, Product, Bill, BillItem, Clerk, BillConfig, AdminUser
+  • Prisma singleton pattern (safe for Next.js hot reload)
+  • File: prisma/dev.db
+
+Data flow for a sale:
+  Browser cart state → POST /api/bills → Prisma creates Bill + BillItems →
+  Response → Browser generates PDF → Opens in new tab → Print dialog
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 9 — SUGGESTED FIGMA DIAGRAM TYPES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SCREEN MAP / SITEMAP
+   Nodes: POS Screen, Admin Login, Admin Portal (5 tabs), Bills History
+   Edges: navigation links and redirects (incl. middleware redirects)
+
+2. USER FLOW — SALE TRANSACTION (Flow A)
+   Steps from Clerk Login → Add Items → Checkout → Print Receipt
+
+3. USER FLOW — ADMIN MANAGE PRODUCTS (Flow D)
+   Steps from Admin Login → Products Tab → Edit/Delete/Add
+
+4. COMPONENT HIERARCHY DIAGRAM
+   POS Page → [Header, BillPanel, Numpad, ProductGrid, ActionBar, Modals]
+   Admin Page → [TabNav, ProductsTab, CategoriesTab, ClerksTab, BillConfigTab, SettingsTab]
+
+5. DATA MODEL / ER DIAGRAM
+   Entities: Category, Product, Bill, BillItem, Clerk, BillConfig, AdminUser
+   Relationships:
+     Category 1──N Product
+     Bill 1──N BillItem
+     BillItem N──1 Product
+
+6. API ARCHITECTURE DIAGRAM
+   Client → API Routes → Prisma ORM → SQLite DB
+   Include: auth middleware, session store, PDF generation
+
+7. ROLE & PERMISSION DIAGRAM
+   Roles: Admin, Clerk, Unauthenticated
+   Access: what each role can/cannot reach
+
+8. RECEIPT / PDF LAYOUT DIAGRAM
+   80mm thermal receipt layout with all configurable sections labeled
+
+================================================================================
+END OF DOCUMENT
+================================================================================

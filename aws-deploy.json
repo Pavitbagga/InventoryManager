@@ -1,0 +1,27 @@
+{
+  "appUrl": "http://3.87.251.243",
+  "ec2InstanceId": "i-0caae5ac114a30d92",
+  "ec2PublicIp": "3.87.251.243",
+  "ec2PublicDns": "ec2-3-87-251-243.compute-1.amazonaws.com",
+  "region": "us-east-1",
+  "instanceType": "t3.small",
+  "keyPair": "pos-deploy-key",
+  "keyFile": "/tmp/pos-deploy-key.pem",
+  "securityGroup": "sg-04d14832f172b23e3",
+  "githubRepo": "https://github.com/Pavitbagga/InventoryManager",
+  "adminCredentials": {
+    "username": "admin",
+    "password": "admin123"
+  },
+  "sampleClerks": [
+    {
+      "name": "Pavit Bagga"
+    },
+    {
+      "name": "Daljit Singh"
+    },
+    {
+      "name": "agam"
+    }
+  ]
+}
